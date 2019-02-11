@@ -1,6 +1,6 @@
 # vert_db
 
-A deader-only C++ library for operating on 3d model vertex data.
+A header-only C++ library for operating on 3d model vertex data.
 * Spatial and connectivity queries
 * Transferring properties like skin weights
 
