@@ -4,46 +4,46 @@ solution "vert_db"
     location "./_build"
     characterset 'Unicode'
 
-	startproject 'vert_db-test'
+    startproject 'vert_db-test'
 
     defines {
-		"_WINDOWS",
-		"USE_FUZZY_VECTOR_EQUAL_OPERATORS",
-	}
+        "_WINDOWS",
+        "USE_FUZZY_VECTOR_EQUAL_OPERATORS",
+    }
 
-	libdirs {
-	}
+    libdirs {
+    }
 
     configuration "Debug"
         defines { "DEBUG" }
-		symbols 'on'
+        symbols 'on'
 
     configuration "Release"
         defines { "NDEBUG" }
         optimize  'On'
 
-	configuration "x32"
-		defines { "_WIN32" }
+    configuration "x32"
+        defines { "_WIN32" }
 
-	configuration "x64"
-		defines { "_WIN64" }
+    configuration "x64"
+        defines { "_WIN64" }
 
 
-	project "vert_db"
-		kind "StaticLib"
+    project "vert_db"
+        kind "StaticLib"
         language "C++"
         location "./_build/projects"
         targetdir "./_bin/%{cfg.buildcfg}/%{cfg.platform}/bin/"
-		implibdir "./_bin/%{cfg.buildcfg}/%{cfg.platform}/lib/"
+        implibdir "./_bin/%{cfg.buildcfg}/%{cfg.platform}/lib/"
 
-		includedirs {
+        includedirs {
             "./include/",
         }
 
         files {
             "./src/**.h",
-			"./src/**.cpp",
-			"./include/**.h",
+            "./src/**.cpp",
+            "./include/**.h",
         }
 
     project "vert_db-test"
@@ -51,18 +51,18 @@ solution "vert_db"
         language "C++"
         location "./_build/projects"
         targetdir "./_bin/%{cfg.buildcfg}/%{cfg.platform}/bin/"
-		implibdir "./_bin/%{cfg.buildcfg}/%{cfg.platform}/lib/"
+        implibdir "./_bin/%{cfg.buildcfg}/%{cfg.platform}/lib/"
 
         includedirs {
             "./include/",
-			"./external/",
+            "./external/",
         }
 
         files {
             "./test/**.h",
-			"./test/**.cpp",
+            "./test/**.cpp",
         }
 
-		dependson {
-			"vert_db"
-		}
+        dependson {
+            "vert_db"
+        }
