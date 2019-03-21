@@ -180,6 +180,74 @@ namespace vd
         typename db_type::scalar m_tolerance;
     };
 
+    template<typename T>
+    class transfer_resolver_gaussian : public transfer_resolver_threaded<T>
+    {
+    public:
+        transfer_resolver_gaussian( item_flags to_set, vd::real radius, size_t weight_total=0, vd::real weight_clip=.05f, bool weight_normalize=true  )
+            : transfer_resolver_threaded( to_set )
+            , m_radius( radius )
+            , m_weight_total(weight_total)
+            , m_weight_clip(weight_clip)
+            , m_weight_normalize(weight_normalize)
+        {
+        }
+
+        bool resolve_vert( const db_type &context, const key_type &key, db_type &results ) const override
+        {
+            auto to_set = results.make_def();
+
+            auto result_pos = results.position( key );
+
+            auto verts = context.find_position_sorted( result_pos, m_radius );
+            if( verts.empty() )
+                return false;
+
+            size_t best_key = verts.front();
+
+            if( flag_is_set( m_set, k_item_id ) )
+                to_set.set_id( context.id(best_key) );
+
+            if( flag_is_set( m_set, k_item_position ) )
+                to_set.set_position( result_pos );
+
+            // TODO: filter normal similar to colors, ut guarantee unit length.
+            if( flag_is_set( m_set, k_item_normal ) )
+                to_set.set_normal( context.normal(best_key) );
+
+            // TODO: Intelligently filter UVW somehow? Barycentric?
+            if( flag_is_set( m_set, k_item_uvw ) )
+                to_set.set_position( context.uvw( best_key ) );
+
+            if( flag_is_set( m_set, k_item_color ) )
+                to_set.set_color( context.sample_color(result_pos, m_radius) );
+
+            if( flag_is_set( m_set, k_item_weights ) )
+            {
+                auto weights = context.find_weights( result_pos, m_radius, m_weight_total, m_weight_clip, m_weight_normalize );
+                to_set.set_weights( weights );
+            }
+
+            // TODO: This can technically create one-way connects.  Maybe shouldn't?
+            //       This should be consistent with ID query.
+            //       Problem comes with multiple items sharing an ID.
+            //       ID dupes should shake out during insert to results DB though.
+            if( flag_is_set( m_set, k_item_connects ) )
+            {
+                to_set.set_connects( context.connects( best_key ) );
+            }
+
+            results.update_atomic( key, to_set );
+            return true;
+        }
+
+    protected:
+        typename db_type::scalar m_radius;
+        size_t m_weight_total;
+        vd::real m_weight_clip;
+        bool m_weight_normalize;
+    };
+
 
     template<typename T>
     class transfer_flood_fill : public transfer_resolver_base<T>
