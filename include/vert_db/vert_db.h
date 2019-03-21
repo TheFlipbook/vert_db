@@ -151,6 +151,25 @@ namespace vd
             return m_pos_cloud.find( location, radius );
         }
 
+        results_type find_position_sorted( const point_type &location, scalar radius = epsilon() ) const
+        {
+            auto keys = m_pos_cloud.find( location, radius );
+            auto distances = distances_to( location, keys );
+
+            sort_indicies_by_factor sorter( distances );
+            VERTDB_BUCKET<size_t> indices( keys.size(), 0 );
+            VERTDB_IOTA( indices.begin(), indices.end(), 0 );
+            VERTDB_BUCKET_SORTER( indices.begin(), indices.end(), sorter );
+
+            decltype( keys ) results( keys.size() );
+            for( auto index : indices )
+            {
+                results.emplace_back( keys[index] );
+            }
+
+            return results;
+        }
+
         results_type find_uvw( const point_type &location, scalar radius=epsilon() ) const
         {
             return m_uvw_cloud.find( location, radius );
