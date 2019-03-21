@@ -36,4 +36,10 @@ TEST_CASE( "vert_db color queries", "[vert_db]" )
     }
 
     REQUIRE( mismatched_finds == 0 );
+
+    vd::vec3 biased_sample{ sphere_radius, sphere_radius/2, sphere_radius/2 };
+    auto sampled = db.sample_color( biased_sample, sphere_radius );
+
+    // Averaged offset query should probably not match the Z pole
+    REQUIRE( !(sampled == color) );
 }

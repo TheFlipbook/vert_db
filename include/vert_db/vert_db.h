@@ -259,6 +259,37 @@ namespace vd
             return results;
         }
 
+        point_type sample_color( const point_type &location, real radius ) const
+        {
+            point_type result{};
+
+            results_type verts = find_position( location, radius );
+            if( verts.empty() )
+                return result;
+
+            size_t count = verts.size();
+            scalar_collection distances = distances_to( location, verts );
+
+            // We'll use a radius factor instead of the standard deviation
+            //  Because the user probably intends a filter from their query point
+            //  Not a weighting around what was in the radius query, in case those results were biased.
+            //scalar sigma = deviation<scalar_collection>( distances.begin(), distances.end() );
+            scalar sigma = radius / 2;
+
+            scalar total_weight = 0;
+            for( size_t i = 0; i < count; ++i )
+            {
+                scalar weighting = gaussian_weight( distances[i], sigma );
+                total_weight += weighting;
+                result = result + (color( verts[i] ) * weighting);
+            }
+
+            if( total_weight > 0 )
+                result = result * (1 / total_weight);
+
+            return result;
+        }
+
         inline vert_id id( key_type key ) const
         {
             return basic_query( key, m_ids );
