@@ -4,7 +4,6 @@
 
 TEST_CASE( "vert_db color queries", "[vert_db]" )
 {
-    
     const size_t sphere_dim = 20;
     const vd::real sphere_radius = 10;
     const vd::real color_tolerance = .05f;
