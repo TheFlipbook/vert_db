@@ -69,10 +69,12 @@ namespace vd
             , m_positions()
             , m_normals()
             , m_uvws()
+            , m_colors()
             , m_weights()
             , m_connects()
             , m_pos_cloud()
             , m_uvw_cloud()
+            , m_color_cloud()
             , m_mutex_edit()
         {
         }
@@ -87,6 +89,7 @@ namespace vd
             result.gather_position( key, m_positions );
             result.gather_normal( key, m_normals );
             result.gather_uvw( key, m_uvws );
+            result.gather_color( key, m_colors );
             result.gather_weights( key, m_weights );
             result.gather_connects( key, m_connects );
 
@@ -151,6 +154,11 @@ namespace vd
         results_type find_uvw( const point_type &location, scalar radius=epsilon() ) const
         {
             return m_uvw_cloud.find( location, radius );
+        }
+
+        results_type find_color( const point_type &location, scalar radius = epsilon() ) const
+        {
+            return m_color_cloud.find( location, radius );
         }
 
         inline results_type find_connects( const key_type &key, size_t depth = 1, bool inclusive = false ) const
@@ -271,6 +279,11 @@ namespace vd
             return basic_query( key, m_uvws );
         }
 
+        inline point_type color( key_type key ) const
+        {
+            return basic_query( key, m_colors );
+        }
+
         inline bone_weights weights( key_type key ) const
         {
             return basic_query( key, m_weights );
@@ -297,6 +310,14 @@ namespace vd
         inline scalar distance_to_uvw( const point_type &point, key_type key ) const
         {
             point_type between = uvw( key ) - point;
+            scalar dist_sq = dot( between, between );
+
+            return sqrt( dist_sq );
+        }
+
+        inline scalar distance_to_color( const point_type &point, key_type key ) const
+        {
+            point_type between = color( key ) - point;
             scalar dist_sq = dot( between, between );
 
             return sqrt( dist_sq );
@@ -448,6 +469,7 @@ namespace vd
             def.apply_position( key, m_positions );
             def.apply_normal( key,  m_normals );
             def.apply_uvw( key, m_uvws );
+            def.apply_color( key, m_colors );
             def.apply_weights( key, m_weights );
             def.apply_connects( key, m_connects );
 
@@ -460,6 +482,9 @@ namespace vd
 
             if( def.has_uvw() )
                 m_uvw_cloud.insert( def.uvw, key );
+
+            if( def.has_color() )
+                m_color_cloud.insert( def.color, key );
         }
 
         // Authoritative representation
@@ -474,12 +499,14 @@ namespace vd
         point_storage m_positions;
         point_storage m_normals;
         point_storage m_uvws;
+        point_storage m_colors;
         weights_storage m_weights;
         connects_storage m_connects;
 
         // Accelleration Structures
         cloud_type m_pos_cloud;
         cloud_type m_uvw_cloud;
+        cloud_type m_color_cloud;
 
         // Parellelization
         mutex_type m_mutex_edit;
