@@ -128,6 +128,11 @@
 #define VERTDB_FORWARD std::forward
 #endif
 
+#ifndef VERTDB_IOTA
+#include <numeric>
+#define VERTDB_IOTA std::iota
+#endif
+
 // Type that can wrap a reference through type deduction to get to VERTDB_TREAD invoke
 #ifndef VERTDB_REF
 #include <memory>

@@ -99,6 +99,8 @@ PointData add_sphere( SimpleTestDB &db, vd::real radius, size_t lat_count, size_
             vd::vec3 point{ pos_x * radius, pos_y * radius, pos_z * radius };
             points.emplace_back( point );
 
+            vd::vec3 color{ abs( pos_x ), abs( pos_y ), abs( pos_z ) };
+
             size_t key = calc_sphere_key(x, y, lat_count, lon_count);
             size_t key_n = offset_sphere_key( x, y, lat_count, lon_count,  0, -1 );
             size_t key_s = offset_sphere_key( x, y, lat_count, lon_count,  0,  1 );
@@ -125,6 +127,9 @@ PointData add_sphere( SimpleTestDB &db, vd::real radius, size_t lat_count, size_
 
             if( vd::flag_is_set( flags, vd::k_item_position ) )
                 def.set_position( point );
+
+            if( vd::flag_is_set( flags, vd::k_item_color ) )
+                def.set_color( color );
 
             if( vd::flag_is_set( flags, vd::k_item_weights ) )
                 def.set_weights( weights );

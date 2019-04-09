@@ -22,26 +22,31 @@ namespace vd
         return ( a.x == b.x ) && ( a.y == b.y ) && ( a.z == b.z );
     }
 
-    template<typename T>
-    inline bool near_equal( const T &a, const T &b, const T &epsilon )
+    template<typename T, typename S>
+    inline bool near_equal( const T &a, const T &b, const S &epsilon )
     {
         return( abs( a - b ) < epsilon );
+    }
+
+    template<>
+    inline bool near_equal<vec3_internal, real>( const vec3_internal &a, const vec3_internal &b, const real &epsilon )
+    {
+        if( !near_equal( a.x, b.x, epsilon ) )
+            return false;
+
+        if( !near_equal( a.y, b.y, epsilon ) )
+            return false;
+
+        if( !near_equal( a.z, b.z, epsilon ) )
+            return false;
+
+        return true;
     }
 
     inline bool operator==( const vec3_internal &a, const vec3_internal &b )
     {
         const vd::real eps = VERTDB_NUMERIC_LIMITS<vd::real>::epsilon() * VERTDB_EPSILON_SCALE;
-        
-        if( !near_equal( a.x, b.x, eps ) )
-            return false;
-
-        if( !near_equal( a.y, b.y, eps ) )
-            return false;
-
-        if( !near_equal( a.z, b.z, eps ) )
-            return false;
-
-        return true;;
+        return near_equal( a, b, eps );
     }
 
     inline vec3_internal operator+( const vec3_internal &a, const vec3_internal &b )
@@ -159,6 +164,26 @@ namespace vd
         T a = value / dev;
         return ( c_sqrt_inv_2pi / dev) * std::exp( -.5 * a * a );
     }
+
+    class sort_indicies_by_factor
+    {
+    public:
+        typedef VERTDB_BUCKET<vd::real> scalar_collection;
+
+        sort_indicies_by_factor( const scalar_collection &distances )
+            : m_distances( distances )
+        {
+        }
+
+        bool operator()( const size_t &a, const size_t &b )
+        {
+            return m_distances[a] < m_distances[b];
+        }
+
+    protected:
+        const scalar_collection &m_distances;
+    };
+
 }
 
 namespace std

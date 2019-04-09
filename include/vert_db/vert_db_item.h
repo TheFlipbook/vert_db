@@ -69,16 +69,17 @@ namespace vd
     typedef int item_flags_backing;
     enum item_flags : item_flags_backing
     {
-        k_item_none = 0,
-        k_item_id = 1 << 0,
-        k_item_position = 1 << 1,
-        k_item_normal = 1 << 2,
-        k_item_uvw = 1 << 3,
-        k_item_weights = 1 << 4,
-        k_item_connects = 1 << 5,
-        k_item_user_data = 1 << 6,
-        k_item_last = k_item_user_data,
-        k_item_all = ( k_item_last << 1 ) - 1,
+        k_item_none         = 0,
+        k_item_id           = 1 << 0,
+        k_item_position     = 1 << 1,
+        k_item_normal       = 1 << 2,
+        k_item_uvw          = 1 << 3,
+        k_item_color        = 1 << 4,
+        k_item_weights      = 1 << 5,
+        k_item_connects     = 1 << 6,
+        k_item_user_data    = 1 << 7,
+        k_item_last         = k_item_user_data,
+        k_item_all          = ( k_item_last << 1 ) - 1,
     };
 
     inline item_flags operator| ( item_flags a, item_flags b )
@@ -126,6 +127,7 @@ namespace vd
         vec3 position{};
         vec3 normal{};
         vec3 uvw{};
+        vec3 color{};
         bone_weights weights{};
         vert_connects connects{};
 
@@ -135,6 +137,7 @@ namespace vd
         VERTDB_DEF_ACCESSORS( position )
         VERTDB_DEF_ACCESSORS( normal )
         VERTDB_DEF_ACCESSORS( uvw )
+        VERTDB_DEF_ACCESSORS( color )
         VERTDB_DEF_ACCESSORS( weights )
         VERTDB_DEF_ACCESSORS( connects )
         VERTDB_DEF_ACCESSORS( user_data )
@@ -145,6 +148,7 @@ namespace vd
             assign_position( position );
             assign_normal( normal );
             assign_uvw( uvw );
+            assign_color( color );
             assign_weights( weights );
             assign_connects( other.connects );
             assign_user_data( user_data );
@@ -219,6 +223,7 @@ namespace vd
         result.set_position( a.position + b.position );
         results.set_normal( a.normal + b.normal );
         result.set_uvw( a.uvw + b.uvw );
+        results.set_color( a.color + b.color );
 
         result.set_weights( combine_weights( a.weights, b.weights ) );
         result.set_connects( combine_connects( a, b ) );
@@ -232,6 +237,7 @@ namespace vd
         a.position = a.position + b.position;
         a.normal = a.normal + b.normal;
         a.uvw = a.uvw + b.uvw;
+        a.color = a.color + b.color;
 
         a.weights = combine_weights( a.weights, b.weights );
         a.connects = combine_connects( a, b );
@@ -247,6 +253,7 @@ namespace vd
         result.position = result.position * amount;
         result.normal = result.normal * amount;
         result.uvw = result.uvw * amount;
+        result.color = result.color * amount;
 
         for( auto &weight_pair : result.weights )
         {

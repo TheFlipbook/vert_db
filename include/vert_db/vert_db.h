@@ -69,10 +69,12 @@ namespace vd
             , m_positions()
             , m_normals()
             , m_uvws()
+            , m_colors()
             , m_weights()
             , m_connects()
             , m_pos_cloud()
             , m_uvw_cloud()
+            , m_color_cloud()
             , m_mutex_edit()
         {
         }
@@ -87,6 +89,7 @@ namespace vd
             result.gather_position( key, m_positions );
             result.gather_normal( key, m_normals );
             result.gather_uvw( key, m_uvws );
+            result.gather_color( key, m_colors );
             result.gather_weights( key, m_weights );
             result.gather_connects( key, m_connects );
 
@@ -187,9 +190,33 @@ namespace vd
             return m_pos_cloud.find( location, radius );
         }
 
+        results_type find_position_sorted( const point_type &location, scalar radius = epsilon() ) const
+        {
+            auto keys = m_pos_cloud.find( location, radius );
+            auto distances = distances_to( location, keys );
+
+            sort_indicies_by_factor sorter( distances );
+            VERTDB_BUCKET<size_t> indices( keys.size(), 0 );
+            VERTDB_IOTA( indices.begin(), indices.end(), 0 );
+            VERTDB_BUCKET_SORTER( indices.begin(), indices.end(), sorter );
+
+            decltype( keys ) results( keys.size() );
+            for( auto index : indices )
+            {
+                results.emplace_back( keys[index] );
+            }
+
+            return results;
+        }
+
         results_type find_uvw( const point_type &location, scalar radius=epsilon() ) const
         {
             return m_uvw_cloud.find( location, radius );
+        }
+
+        results_type find_color( const point_type &location, scalar radius = epsilon() ) const
+        {
+            return m_color_cloud.find( location, radius );
         }
 
         inline results_type find_connects( const key_type &key, size_t depth = 1, bool inclusive = false ) const
@@ -290,6 +317,37 @@ namespace vd
             return results;
         }
 
+        point_type sample_color( const point_type &location, real radius ) const
+        {
+            point_type result{};
+
+            results_type verts = find_position( location, radius );
+            if( verts.empty() )
+                return result;
+
+            size_t count = verts.size();
+            scalar_collection distances = distances_to( location, verts );
+
+            // We'll use a radius factor instead of the standard deviation
+            //  Because the user probably intends a filter from their query point
+            //  Not a weighting around what was in the radius query, in case those results were biased.
+            //scalar sigma = deviation<scalar_collection>( distances.begin(), distances.end() );
+            scalar sigma = radius / 2;
+
+            scalar total_weight = 0;
+            for( size_t i = 0; i < count; ++i )
+            {
+                scalar weighting = gaussian_weight( distances[i], sigma );
+                total_weight += weighting;
+                result = result + (color( verts[i] ) * weighting);
+            }
+
+            if( total_weight > 0 )
+                result = result * (1 / total_weight);
+
+            return result;
+        }
+
         inline vert_id id( key_type key ) const
         {
             return basic_query( key, m_ids );
@@ -308,6 +366,11 @@ namespace vd
         inline point_type uvw( key_type key ) const
         {
             return basic_query( key, m_uvws );
+        }
+
+        inline point_type color( key_type key ) const
+        {
+            return basic_query( key, m_colors );
         }
 
         inline bone_weights weights( key_type key ) const
@@ -336,6 +399,14 @@ namespace vd
         inline scalar distance_to_uvw( const point_type &point, key_type key ) const
         {
             point_type between = uvw( key ) - point;
+            scalar dist_sq = dot( between, between );
+
+            return sqrt( dist_sq );
+        }
+
+        inline scalar distance_to_color( const point_type &point, key_type key ) const
+        {
+            point_type between = color( key ) - point;
             scalar dist_sq = dot( between, between );
 
             return sqrt( dist_sq );
@@ -487,6 +558,7 @@ namespace vd
             def.apply_position( key, m_positions );
             def.apply_normal( key,  m_normals );
             def.apply_uvw( key, m_uvws );
+            def.apply_color( key, m_colors );
             def.apply_weights( key, m_weights );
             def.apply_connects( key, m_connects );
 
@@ -499,6 +571,9 @@ namespace vd
 
             if( def.has_uvw() )
                 m_uvw_cloud.insert( def.uvw, key );
+
+            if( def.has_color() )
+                m_color_cloud.insert( def.color, key );
         }
 
         // Authoritative representation
@@ -513,12 +588,14 @@ namespace vd
         point_storage m_positions;
         point_storage m_normals;
         point_storage m_uvws;
+        point_storage m_colors;
         weights_storage m_weights;
         connects_storage m_connects;
 
         // Accelleration Structures
         cloud_type m_pos_cloud;
         cloud_type m_uvw_cloud;
+        cloud_type m_color_cloud;
 
         // Parellelization
         mutex_type m_mutex_edit;
