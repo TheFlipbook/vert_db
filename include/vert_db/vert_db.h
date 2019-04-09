@@ -123,6 +123,45 @@ namespace vd
             return insert( def );
         }
 
+        self_type operator+( const self_type &other )
+        {
+            self_type ret;
+
+            for( const auto &key : *this )
+            {
+                auto def = make_def();
+                if( gather( key, def ) )
+                {
+                    insert( def );
+                }
+            }
+
+            for( const auto &key : other )
+            {
+                auto def = make_def();
+                if( other.gather( key, def ) )
+                {
+                    insert( def );
+                }
+            }
+
+            return ret;
+        }
+
+        self_type& operator+=( const self_type &other )
+        {
+            for( const auto &key : other )
+            {
+                auto def = make_def();
+                if( other.gather( key, def ) )
+                {
+                    insert( def );
+                }
+            }
+
+            return &this;
+        }
+
         void update( const key_type &key, const def_type &def )
         {
             apply_def( key, def );
