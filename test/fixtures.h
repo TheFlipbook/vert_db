@@ -54,3 +54,20 @@ void shuffle_ids( T &db )
     }
 }
 
+template<typename T>
+void flip_normals( T &db )
+{
+    for( const auto &key : db )
+    {
+        auto normal = db.normal( key );
+        normal = normal * -1;
+
+        auto def = db.make_def();
+        if( db.gather( key, def ) )
+        {
+            def.normal = normal;
+            db.update( key, def );
+        }
+    }
+}
+

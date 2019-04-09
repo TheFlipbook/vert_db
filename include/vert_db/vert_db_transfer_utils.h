@@ -140,6 +140,56 @@ namespace vd
     };
 
     template<typename T>
+    class transfer_resolver_physical : public transfer_resolver_threaded<T>
+    {
+    public:
+        transfer_resolver_physical( item_flags to_set, vd::real position_tolerance = 1e-5 , vd::real normal_tolerance=VERTDB_PI )
+            : transfer_resolver_threaded( to_set )
+            , m_position_tolerance( position_tolerance )
+            , m_normal_tolerance( normal_tolerance )
+        {
+        }
+
+        bool resolve_vert( const db_type &context, const key_type &key, db_type &results ) const override
+        {
+            auto result_pos = results.position( key );
+            auto result_norm = results.normal( key );
+            auto found = context.find_position( result_pos, m_position_tolerance );
+            vd::real angle_tolerance = 1 - m_normal_tolerance;
+
+            if( found.empty() )
+                return false;
+
+            db_type::scalar best_dist = VERTDB_NUMERIC_LIMITS<db_type::scalar>::max();
+            db_type::key_type best_key = found[0];
+
+            for( const auto &found_key : found )
+            {
+                auto compare_normal = context.normal( found_key );
+                vd::real NdotN = dot( result_norm, compare_normal );
+                if( angle_tolerance >= NdotN )
+                {
+                    db_type::scalar dist = context.distance_to( result_pos, found_key );
+                    if( dist < best_dist )
+                    {
+                        best_dist = dist;
+                        best_key = found_key;
+                    }
+                }
+            }
+
+            if( best_key == c_invalid_vert_id )
+                return false;
+
+            return apply( context, best_key, results, key );
+        }
+
+    protected:
+        typename db_type::scalar m_position_tolerance;
+        typename db_type::scalar m_normal_tolerance;
+    };
+
+    template<typename T>
     class transfer_resolver_uvw : public transfer_resolver_threaded<T>
     {
     public:
